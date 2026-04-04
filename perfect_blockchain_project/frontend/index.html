@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blockchain Chat</title>
+</head>
+
+<body>
+  <h2>Blockchain Chat App</h2>
+
+  <input id="msg" placeholder="Enter message" />
+  <button onclick="send()">Send</button>
+
+  <ul id="list"></ul>
+
+  <script>
+    // ✅ FIXED PORT
+    const BASE_URL = "http://localhost:5001";
+
+    // 🔥 SEND MESSAGE
+    async function send() {
+      const message = document.getElementById("msg").value;
+
+      if (!message) {
+        alert("Please enter message");
+        return;
+      }
+
+      try {
+        const res = await fetch(BASE_URL + "/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+        console.log("Sent:", data);
+
+        document.getElementById("msg").value = "";
+        load();
+
+      } catch (err) {
+        console.error("Send error:", err);
+        alert("Error sending message");
+      }
+    }
+
+    // 🔥 LOAD MESSAGES
+    async function load() {
+      try {
+        const res = await fetch(BASE_URL + "/messages");
+        const data = await res.json();
+
+        const list = document.getElementById("list");
+        list.innerHTML = "";
+
+        data.forEach(m => {
+          const li = document.createElement("li");
+
+          li.innerHTML = `
+            ${m.message}
+            <button onclick="verify(${m.id}, '${m.message}')">
+              Verify
+            </button>
+          `;
+
+          list.appendChild(li);
+        });
+
+      } catch (err) {
+        console.error("Load error:", err);
+      }
+    }
+
+    // 🔥 VERIFY MESSAGE
+    async function verify(id, message) {
+      try {
+        const res = await fetch(BASE_URL + "/verify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ id, message })
+        });
+
+        const data = await res.json();
+
+        if (data.verified) {
+          alert("✔ Verified");
+        } else {
+          alert("❌ Tampered");
+        }
+
+      } catch (err) {
+        console.error("Verify error:", err);
+        alert("Verification failed");
+      }
+    }
+
+    // 🚀 LOAD DATA ON START (NO INIT NEEDED)
+    load();
+  </script>
+
+</body>
+</html>
